@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>What If I Had Spent Less? | FinTech Tester</title>
+<style>
+:root{font-family:Arial,sans-serif;color:#182235;background:#f3f6fb}
+*{box-sizing:border-box}body{max-width:1200px;margin:auto;padding:22px}
+header{background:#173b70;color:white;padding:25px;border-radius:16px;margin-bottom:18px}
+header p{color:#e0eaff}.app-navigation{display:flex;gap:10px;flex-wrap:wrap;margin:0 0 18px}
+.nav-link{display:inline-block;padding:11px 15px;border-radius:9px;background:#e5edf9;color:#173b70;text-decoration:none;font-weight:700}
+.nav-link.active,.nav-link:hover{background:#245db5;color:#fff}
+section{background:white;padding:20px;margin:18px 0;border-radius:14px;box-shadow:0 3px 12px #14213d0c}
+h2{margin-top:0}button{border:0;border-radius:8px;padding:11px 16px;background:#245db5;color:white;cursor:pointer;font-weight:bold}
+button:disabled{opacity:.55;cursor:wait}input,select{width:100%;padding:10px;border:1px solid #cbd5e1;border-radius:8px;background:white}
+label{display:block;font-size:14px;margin-bottom:6px}.muted{color:#64748b}.status{margin-top:12px;overflow-wrap:anywhere}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px}
+.metric{background:#eef4ff;border-radius:10px;padding:16px}.metric strong{display:block;font-size:24px;margin-top:8px}
+.form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px;align-items:end}
+.table-wrap{overflow:auto;max-height:460px;margin-top:14px}table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{text-align:left;padding:10px;border-bottom:1px solid #e2e8f0;white-space:nowrap}th{background:#edf3fc;position:sticky;top:0}
+.tx-option{display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center;padding:12px;border-bottom:1px solid #e2e8f0}
+.tx-option input[type=checkbox]{width:auto}.tx-title{font-weight:700}.tx-sub{font-size:13px;color:#64748b;margin-top:4px}
+.pill{display:inline-block;border-radius:999px;background:#e8f5ed;color:#17633a;padding:4px 8px;font-size:12px}
+.warning{background:#fff7e6;border-left:4px solid #eab308;padding:12px;border-radius:8px}
+.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}.secondary{background:#64748b}
+@media(max-width:600px){body{padding:10px}section{padding:14px}.tx-option{grid-template-columns:auto 1fr}.tx-amount{grid-column:2}}
+</style>
+</head>
+<body>
+<header>
+<h1>What If I Had Spent Less?</h1>
+<p>Replay past spending decisions, test alternatives, and estimate what recurring savings could mean for your future.</p>
+</header>
+<nav class="app-navigation" aria-label="Main navigation">
+<a class="nav-link" href="/">Dashboard</a>
+<a class="nav-link active" href="/hypothetical.html">What If I Had Spent Less?</a>
+</nav>
+
+<section>
+<h2>1. Choose the period and budget</h2>
+<p class="muted">Use transactions loaded from your Base44 dashboard. This is a simulation only; it does not change your bank records.</p>
+<div class="form-grid">
+<div><label for="month">Historical month</label><select id="month"><option value="">Load transactions first</option></select></div>
+<div><label for="budget">Monthly budget (₹)</label><input id="budget" type="number" min="0" step="0.01" placeholder="e.g. 20000"></div>
+<div><label for="reduction-mode">How should expenses be reduced?</label><select id="reduction-mode"><option value="percent">Percentage per selected expense</option><option value="fixed">Fixed amount per selected expense (₹)</option></select></div>
+<div><label for="reduction-value">Reduction value</label><input id="reduction-value" type="number" min="0" step="0.01" value="20"></div>
+</div>
+<div class="actions"><button id="load-button">Load / Refresh transactions</button><button id="select-all" class="secondary" type="button">Select all visible expenses</button><button id="clear-all" class="secondary" type="button">Clear selection</button></div>
+<p id="status" class="status muted" role="status">Loading transaction data…</p>
+</section>
+
+<section>
+<h2>2. Select expenses to test</h2>
+<p class="muted">Select individual transactions or use category selection to include every expense in a category for the selected month.</p>
+<div class="form-grid">
+<div><label for="category-filter">Select a category</label><select id="category-filter"><option value="">Choose category</option></select></div>
+<div><button id="select-category" type="button">Select category expenses</button></div>
+<div><button id="deselect-category" class="secondary" type="button">Deselect category expenses</button></div>
+</div>
+<div id="transactions-list"><p class="muted">Waiting for transactions…</p></div>
+</section>
+
+<section>
+<h2>3. Recurring payment scenarios</h2>
+<p class="muted">Recurring payments are estimated when the same merchant/counterparty has outgoing transactions in at least two different months. Review the detected list before using it.</p>
+<div id="recurring-list"><p class="muted">Waiting for transactions…</p></div>
+</section>
+
+<section>
+<h2>Scenario results</h2>
+<div class="grid">
+<div class="metric">Actual selected expenditure<strong id="actual">₹0</strong></div>
+<div class="metric">Hypothetical reduction<strong id="saved">₹0</strong></div>
+<div class="metric">Hypothetical expenditure<strong id="hypothetical">₹0</strong></div>
+<div class="metric">Budget utilisation<strong id="utilisation">—</strong></div>
+<div class="metric">Budget left after scenario<strong id="remaining">—</strong></div>
+<div class="metric">Estimated recurring savings / month<strong id="monthly-savings">₹0</strong></div>
+<div class="metric">Estimated recurring savings / year<strong id="annual-savings">₹0</strong></div>
+<div class="metric">Future commitments after changes<strong id="future-commitments">₹0 / month</strong></div>
+</div>
+<div class="table-wrap">
+<table><thead><tr><th>Measure</th><th>Actual</th><th>Hypothetical</th><th>Difference</th></tr></thead>
+<tbody id="comparison-body"></tbody></table>
+</div>
+<p class="warning">Estimates assume the selected reduction repeats each month for recurring payments. Future commitments only include recurring payments detected in the loaded transaction history; confirm each payment manually. Actual historical spending is not refunded or changed.</p>
+</section>
+
+<script>
+const $ = id => document.getElementById(id);
+let transactions = [];
+let selectedIds = new Set();
+let recurringChoices = new Map();
+let recurringItems = [];
+
+function money(n){return new Intl.NumberFormat("en-IN",{style:"currency",currency:"INR",maximumFractionDigits:2}).format(Number(n)||0)}
+function amountOf(tx){const n=Number(tx.amount);return Number.isFinite(n)?Math.abs(n):0}
+function directionOf(tx){return String(tx.direction||tx.type||tx.transaction_type||"").toLowerCase()}
+function isExpense(tx){
+  const d=directionOf(tx);
+  if(["credit","income","in","received","deposit"].some(x=>d.includes(x))) return false;
+  if(["debit","expense","out","paid","withdrawal"].some(x=>d.includes(x))) return true;
+  // When direction is absent, negative amounts are expenses; positive values are ambiguous.
+  return Number(tx.amount)<0;
+}
+function dateOf(tx){const raw=tx.timestamp||tx.date||tx.transaction_date||tx.created_date||"";const m=String(raw).match(/^(\d{4}-\d{2})-(\d{2})/);return m?{full:`${m[1]}-${m[2]}`,month:m[1]}:{full:"Undated",month:""}}
+function categoryOf(tx){return String(tx.category||tx.subcategory||"Uncategorised")}
+function merchantOf(tx){return String(tx.counterparty||tx.recipient||tx.sender||tx.merchant||"Unknown merchant")}
+function idOf(tx,index){return String(tx.txn_id||tx.transaction_id||tx.id||`${dateOf(tx).full}-${merchantOf(tx)}-${amountOf(tx)}-${index}`)}
+function selectedMonth(){return $("month").value}
+function visibleExpenses(){return transactions.map((tx,i)=>({...tx,__key:idOf(tx,i),__index:i})).filter(tx=>isExpense(tx)&&dateOf(tx).month===selectedMonth())}
+function reductionFor(amount){
+ const value=Math.max(0,Number($("reduction-value").value)||0);
+ return $("reduction-mode").value==="percent"?amount*Math.min(value,100)/100:Math.min(amount,value);
+}
+function safeText(tag,text,className){const el=document.createElement(tag);el.textContent=text;if(className)el.className=className;return el}
+
+function renderMonths(){
+ const sel=$("month");const old=sel.value;const months=[...new Set(transactions.map(t=>dateOf(t).month).filter(Boolean))].sort().reverse();
+ sel.replaceChildren();months.forEach(m=>sel.add(new Option(m,m)));
+ if(!months.length){sel.add(new Option("No dated transactions found",""));sel.disabled=true;return}
+ sel.disabled=false;sel.value=months.includes(old)?old:months[0];
+}
+function detectRecurring(){
+ const groups=new Map();
+ transactions.forEach((tx,i)=>{
+  if(!isExpense(tx))return;
+  const merchant=merchantOf(tx).trim().toLowerCase();
+  const month=dateOf(tx).month;
+  if(!month||!merchant||merchant==="unknown merchant")return;
+  const key=merchant+"|"+categoryOf(tx).toLowerCase();
+  if(!groups.has(key))groups.set(key,{key,merchant:merchantOf(tx),category:categoryOf(tx),months:new Set(),amounts:[],transactions:[]});
+  const g=groups.get(key);g.months.add(month);g.amounts.push(amountOf(tx));g.transactions.push(tx);
+ });
+ recurringItems=[...groups.values()].filter(g=>g.months.size>=2).map(g=>({...g,average:g.amounts.reduce((a,b)=>a+b,0)/g.amounts.length,monthly:g.amounts.reduce((a,b)=>a+b,0)/g.months.size}));
+ recurringItems.forEach(g=>{if(!recurringChoices.has(g.key))recurringChoices.set(g.key,{action:"keep",reduction:20,mode:"percent"})});
+}
+function renderTransactions(){
+ const list=$("transactions-list");list.replaceChildren();const rows=visibleExpenses();
+ if(!rows.length){list.appendChild(safeText("p","No outgoing expenses found for this month. Check the transaction direction/type fields or select another month.","muted"));calculate();return}
+ rows.forEach(tx=>{
+  const label=document.createElement("label");label.className="tx-option";
+  const cb=document.createElement("input");cb.type="checkbox";cb.checked=selectedIds.has(tx.__key);cb.addEventListener("change",()=>{cb.checked?selectedIds.add(tx.__key):selectedIds.delete(tx.__key);calculate()});
+  const info=document.createElement("span");info.appendChild(safeText("div",merchantOf(tx),"tx-title"));info.appendChild(safeText("div",`${dateOf(tx).full} · ${categoryOf(tx)} · ${tx.status||"status unknown"}`,"tx-sub"));
+  const amount=safeText("strong",money(amountOf(tx)),"tx-amount");label.append(cb,info,amount);list.appendChild(label);
+ });
+ const categories=[...new Set(rows.map(categoryOf))].sort();const sel=$("category-filter");const old=sel.value;sel.replaceChildren();sel.add(new Option("Choose category",""));categories.forEach(c=>sel.add(new Option(c,c)));sel.value=categories.includes(old)?old:"";
+ calculate();
+}
+function renderRecurring(){
+ const list=$("recurring-list");list.replaceChildren();
+ if(!recurringItems.length){list.appendChild(safeText("p","No recurring candidates detected yet. Load at least two months of outgoing transactions. Detection is heuristic, not a confirmed subscription list.","muted"));calculate();return}
+ recurringItems.forEach(g=>{
+  const row=document.createElement("div");row.className="tx-option";row.style.gridTemplateColumns="minmax(180px,1fr) minmax(110px,.6fr) minmax(130px,.7fr) minmax(130px,.7fr)";
+  const info=document.createElement("div");info.appendChild(safeText("div",g.merchant,"tx-title"));info.appendChild(safeText("div",`${g.category} · ${g.months.size} months · avg ${money(g.monthly)}/month`,"tx-sub"));
+  const action=document.createElement("div");action.appendChild(safeText("label","Future action"));const select=document.createElement("select");
+  [["keep","Keep"],["reduce","Reduce"],["cancel","Cancel"]].forEach(([v,t])=>select.add(new Option(t,v)));
+  select.value=recurringChoices.get(g.key).action;select.addEventListener("change",()=>{recurringChoices.get(g.key).action=select.value;renderRecurring();calculate()});action.appendChild(select);
+  const mode=document.createElement("div");mode.appendChild(safeText("label","Reduction type"));const modeSel=document.createElement("select");modeSel.add(new Option("Percent","percent"));modeSel.add(new Option("Fixed ₹ / month","fixed"));modeSel.value=recurringChoices.get(g.key).mode;modeSel.disabled=recurringChoices.get(g.key).action!=="reduce";
+  modeSel.addEventListener("change",()=>{recurringChoices.get(g.key).mode=modeSel.value;calculate()});mode.appendChild(modeSel);
+  const value=document.createElement("div");value.appendChild(safeText("label","Reduce by"));const input=document.createElement("input");input.type="number";input.min="0";input.step="0.01";input.value=recurringChoices.get(g.key).reduction;input.disabled=recurringChoices.get(g.key).action!=="reduce";
+  input.addEventListener("input",()=>{recurringChoices.get(g.key).reduction=Math.max(0,Number(input.value)||0);calculate()});value.appendChild(input);
+  row.append(info,action,mode,value);list.appendChild(row);
+ });
+}
+function calculate(){
+ const rows=visibleExpenses();const selected=rows.filter(tx=>selectedIds.has(tx.__key));
+ const actual=selected.reduce((s,t)=>s+amountOf(t),0);
+ const historicalSaved=selected.reduce((s,t)=>s+reductionFor(amountOf(t)),0);
+ const hypothetical=Math.max(0,actual-historicalSaved);
+ const budget=Math.max(0,Number($("budget").value)||0);
+ const utilisation=budget>0?hypothetical/budget*100:null;
+ let monthlySavings=0,futureCommitments=0;
+ recurringItems.forEach(g=>{
+  const choice=recurringChoices.get(g.key)||{action:"keep"};
+  if(choice.action==="cancel"){monthlySavings+=g.monthly;return}
+  if(choice.action==="reduce"){
+   const v=Math.max(0,Number(choice.reduction)||0);
+   const reduction=choice.mode==="percent"?g.monthly*Math.min(v,100)/100:Math.min(g.monthly,v);
+   monthlySavings+=reduction;futureCommitments+=Math.max(0,g.monthly-reduction);
+  }else futureCommitments+=g.monthly;
+ });
+ $("actual").textContent=money(actual);$("saved").textContent=money(historicalSaved);$("hypothetical").textContent=money(hypothetical);
+ $("utilisation").textContent=utilisation===null?"Enter a budget":`${utilisation.toFixed(1)}%`;
+ $("remaining").textContent=budget>0?money(budget-hypothetical):"Enter a budget";
+ $("monthly-savings").textContent=money(monthlySavings);$("annual-savings").textContent=money(monthlySavings*12);$("future-commitments").textContent=`${money(futureCommitments)} / month`;
+ const body=$("comparison-body");body.replaceChildren();
+ const rowsOut=[
+  ["Selected historical expenses",actual,hypothetical,hypothetical-actual],
+  ["Budget utilisation",budget>0?actual/budget*100:null,utilisation,utilisation===null||budget===0?null:utilisation-actual/budget*100],
+  ["Recurring commitments per month",recurringItems.reduce((s,g)=>s+g.monthly,0),futureCommitments,futureCommitments-recurringItems.reduce((s,g)=>s+g.monthly,0)]
+ ];
+ rowsOut.forEach(r=>{const tr=document.createElement("tr");[r[0],r[1]===null?"—":(r[0]==="Budget utilisation"?r[1].toFixed(1)+"%":money(r[1])),r[2]===null?"—":(r[0]==="Budget utilisation"?r[2].toFixed(1)+"%":money(r[2])),r[3]===null?"—":(r[0]==="Budget utilisation"?(r[3]>=0?"+":"")+r[3].toFixed(1)+" percentage points":money(r[3]))].forEach(v=>tr.appendChild(safeText("td",v)));body.appendChild(tr)});
+}
+async function loadData(){
+ $("load-button").disabled=true;$("status").textContent="Fetching Base44 transactions…";
+ try{
+  const res=await fetch("/api/dashboard",{cache:"no-store"});const data=await res.json();if(!res.ok)throw new Error(data.error||"Could not load dashboard data");
+  transactions=Array.isArray(data.transactions)?data.transactions:[];
+  selectedIds.clear();renderMonths();detectRecurring();renderTransactions();renderRecurring();
+  $("status").textContent=`Loaded ${transactions.length} transaction(s). Choose a month and select expenses to run a scenario.`;
+ }catch(e){$("status").textContent="Could not load transactions: "+e.message+" — check that BASE44_TOKEN is configured on the server."}
+ finally{$("load-button").disabled=false}
+}
+$("load-button").addEventListener("click",loadData);
+$("month").addEventListener("change",renderTransactions);
+$("budget").addEventListener("input",calculate);
+$("reduction-mode").addEventListener("change",calculate);
+$("reduction-value").addEventListener("input",calculate);
+$("select-all").addEventListener("click",()=>{visibleExpenses().forEach(t=>selectedIds.add(t.__key));renderTransactions()});
+$("clear-all").addEventListener("click",()=>{visibleExpenses().forEach(t=>selectedIds.delete(t.__key));renderTransactions()});
+$("select-category").addEventListener("click",()=>{const c=$("category-filter").value;if(!c)return;visibleExpenses().filter(t=>categoryOf(t)===c).forEach(t=>selectedIds.add(t.__key));renderTransactions()});
+$("deselect-category").addEventListener("click",()=>{const c=$("category-filter").value;if(!c)return;visibleExpenses().filter(t=>categoryOf(t)===c).forEach(t=>selectedIds.delete(t.__key));renderTransactions()});
+loadData();
+</script>
+</body>
+</html>

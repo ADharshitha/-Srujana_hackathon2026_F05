@@ -1,0 +1,471 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mock Hack | FinTech Tester</title>
+
+<style>
+:root {
+  font-family: Arial, sans-serif;
+  color: #182235;
+  background: #f3f6fb;
+}
+* { box-sizing: border-box; }
+body { max-width: 1200px; margin: auto; padding: 22px; }
+header {
+  background: #173b70; color: white; padding: 25px;
+  border-radius: 16px; margin-bottom: 20px;
+}
+header p { color: #e0eaff; }
+section {
+  background: white; padding: 20px; margin: 18px 0;
+  border-radius: 14px; box-shadow: 0 3px 12px #14213d0c;
+}
+h2 { margin-top: 0; }
+button {
+  border: 0; border-radius: 8px; padding: 11px 16px;
+  background: #245db5; color: white; cursor: pointer;
+  font-weight: bold;
+}
+button:disabled { opacity: .55; cursor: wait; }
+input, select {
+  width: 100%; padding: 10px; border: 1px solid #cbd5e1;
+  border-radius: 8px; background: white;
+}
+label { display: block; font-size: 14px; margin-bottom: 6px; }
+.cards {
+  display: grid; grid-template-columns: repeat(auto-fit,minmax(180px,1fr));
+  gap: 14px; margin-top: 16px;
+}
+.metric { background: #eef4ff; border-radius: 10px; padding: 16px; }
+.metric strong { display: block; font-size: 25px; margin-top: 8px; }
+.muted { color: #64748b; }
+.status { margin-top: 12px; overflow-wrap: anywhere; }
+.debt-form {
+  display: grid; grid-template-columns: repeat(auto-fit,minmax(180px,1fr));
+  gap: 12px; align-items: end;
+}
+.alert-card {
+  border-left: 6px solid var(--alert-color);
+  background: #fff; border-radius: 10px; padding: 14px;
+  margin: 10px 0; box-shadow: 0 2px 8px #14213d0c;
+}
+.alert-top {
+  display: flex; justify-content: space-between;
+  flex-wrap: wrap; gap: 8px;
+}
+.alert-level { font-weight: bold; color: var(--alert-color); }
+.alert-details { color: #526078; margin-top: 8px; font-size: 14px; }
+.alert-empty { padding: 14px; background: #eef8f0; border-radius: 10px; }
+.table-wrap { overflow: auto; max-height: 460px; margin-top: 14px; }
+table { border-collapse: collapse; width: 100%; font-size: 14px; }
+th, td {
+  text-align: left; padding: 10px; border-bottom: 1px solid #e2e8f0;
+  white-space: nowrap;
+}
+th { background: #edf3fc; position: sticky; top: 0; }
+@media(max-width:600px) {
+  body { padding: 10px; }
+  section { padding: 14px; }
+}
+</style>
+</head>
+
+<body>
+<header>
+  <h1>Mock Hack FinTech Tester</h1>
+  <p>Explore demo UPI transactions, monitor upcoming debts, and export reports.</p>
+</header>
+
+<nav class="app-navigation" aria-label="Main navigation">
+  <a class="nav-link active" href="/">Dashboard</a>
+  <a class="nav-link" href="/hypothetical.html">What If I Had Spent Less?</a>
+</nav>
+<style>
+.app-navigation { display:flex; gap:10px; flex-wrap:wrap; margin:0 0 18px; }
+.nav-link { display:inline-block; padding:11px 15px; border-radius:9px; background:#e5edf9; color:#173b70; text-decoration:none; font-weight:700; }
+.nav-link.active, .nav-link:hover { background:#245db5; color:#fff; }
+</style>
+
+<section id="debt-section">
+  <h2>Upcoming Debts &amp; Risk Alerts</h2>
+  <p class="muted">
+    Add bills, repayments, or penalties. Risk levels are recalculated
+    using today's date whenever the alerts are loaded.
+  </p>
+
+  <form id="debt-form" class="debt-form">
+    <div>
+      <label for="debt-name">Debt or bill name</label>
+      <input id="debt-name" maxlength="120"
+             placeholder="Credit card payment" required>
+    </div>
+    <div>
+      <label for="debt-amount">Amount (₹)</label>
+      <input id="debt-amount" type="number" min="0.01"
+             step="0.01" placeholder="1500" required>
+    </div>
+    <div>
+      <label for="debt-due-date">Due date</label>
+      <input id="debt-due-date" type="date" required>
+    </div>
+    <div>
+      <label for="debt-reason">Note (optional)</label>
+      <input id="debt-reason" maxlength="250"
+             placeholder="Monthly repayment">
+    </div>
+    <div>
+      <button id="save-debt-button" type="submit">Add Upcoming Debt</button>
+    </div>
+  </form>
+
+  <p id="debt-form-status" class="status" role="status"></p>
+  <h3>Priority Alerts</h3>
+  <div id="debt-alert-list" aria-live="polite">Loading debts...</div>
+</section>
+
+<section>
+  <h2>Dashboard</h2>
+  <button id="refresh-button" type="button">Load / Refresh Base44 Data</button>
+  <p id="dashboard-status" class="status muted">Loading dashboard...</p>
+
+  <div class="cards">
+    <div class="metric">Bank accounts<strong id="account-count">-</strong></div>
+    <div class="metric">Transactions<strong id="transaction-count">-</strong></div>
+    <div class="metric">Available report months<strong id="month-count">-</strong></div>
+  </div>
+</section>
+
+<section>
+  <h2>Monthly Reports</h2>
+  <p class="muted">Choose a month to download its Base44 transactions as an Excel workbook.</p>
+  <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:end">
+    <div style="min-width:180px;flex:1">
+      <label for="report-month">Select month</label>
+      <select id="report-month" disabled>
+        <option value="">Load data first</option>
+      </select>
+    </div>
+    <button id="download-button" type="button" disabled>
+      Download Excel (.xlsx)
+    </button>
+  </div>
+  <p id="report-status" class="status" role="status"></p>
+</section>
+
+<section>
+  <h2>Bank Accounts</h2>
+  <div class="table-wrap">
+    <table>
+      <thead><tr>
+        <th>Account</th><th>Holder</th><th>Masked number</th><th>Balance</th>
+      </tr></thead>
+      <tbody id="accounts-body"></tbody>
+    </table>
+  </div>
+</section>
+
+<section>
+  <h2>Transactions</h2>
+  <div class="table-wrap">
+    <table>
+      <thead><tr>
+        <th>Date</th><th>Transaction ID</th><th>Direction</th>
+        <th>Amount</th><th>Category</th><th>Counterparty</th><th>Status</th>
+      </tr></thead>
+      <tbody id="transactions-body"></tbody>
+    </table>
+  </div>
+</section>
+
+<script>
+const byId = id => document.getElementById(id);
+let transactionData = [];
+
+function addCell(row, value) {
+  const cell = document.createElement("td");
+  cell.textContent = value == null ? "" : String(value);
+  row.appendChild(cell);
+}
+
+function money(value, currency = "INR") {
+  const number = Number(value);
+  if (!Number.isFinite(number)) return String(value ?? "");
+  return new Intl.NumberFormat("en-IN", {
+    style: "currency", currency, maximumFractionDigits: 2
+  }).format(number);
+}
+
+function getTxDate(tx) {
+  const raw = tx.timestamp || tx.date ||
+    tx.transaction_date || tx.created_date || "";
+  const match = String(raw).match(/^(\d{4}-\d{2})-(\d{2})/);
+  return match
+    ? {date: `${match[1]}-${match[2]}`, month: match[1]}
+    : {date: "", month: ""};
+}
+
+function getTxId(tx) {
+  return tx.txn_id || tx.transaction_id || tx.id || "";
+}
+
+function getCounterparty(tx) {
+  return tx.counterparty || tx.recipient || tx.sender || "";
+}
+
+// ---------------- Dashboard ----------------
+
+async function loadDashboard() {
+  const button = byId("refresh-button");
+  const status = byId("dashboard-status");
+  button.disabled = true;
+  status.textContent = "Fetching transactions from Base44...";
+
+  try {
+    const response = await fetch("/api/dashboard", {cache: "no-store"});
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || "Could not load dashboard.");
+
+    const accounts = Array.isArray(data.accounts) ? data.accounts : [];
+    transactionData = Array.isArray(data.transactions) ? data.transactions : [];
+
+    byId("account-count").textContent = accounts.length;
+    byId("transaction-count").textContent = transactionData.length;
+    renderAccounts(accounts);
+    renderTransactions(transactionData);
+    renderMonths(transactionData);
+
+    status.textContent = "Base44 data loaded successfully.";
+  } catch (error) {
+    status.textContent = "Error: " + error.message;
+  } finally {
+    button.disabled = false;
+  }
+}
+
+function renderAccounts(accounts) {
+  const body = byId("accounts-body");
+  body.replaceChildren();
+
+  accounts.forEach(account => {
+    const row = document.createElement("tr");
+    addCell(row, account.account_name || account.bank_name || account.name);
+    addCell(row, account.account_holder || account.holder_name);
+    addCell(row, account.masked_account_number || account.masked_number);
+    addCell(row, money(
+      account.current_balance ?? account.balance ?? 0,
+      account.currency || "INR"
+    ));
+    body.appendChild(row);
+  });
+}
+
+function renderTransactions(transactions) {
+  const body = byId("transactions-body");
+  body.replaceChildren();
+
+  transactions.forEach(tx => {
+    const row = document.createElement("tr");
+    addCell(row, getTxDate(tx).date);
+    addCell(row, getTxId(tx));
+    addCell(row, tx.direction || tx.type || "");
+    addCell(row, money(tx.amount, tx.currency || "INR"));
+    addCell(row, tx.category || tx.subcategory || "");
+    addCell(row, getCounterparty(tx));
+    addCell(row, tx.status || "");
+    body.appendChild(row);
+  });
+}
+
+function renderMonths(transactions) {
+  const select = byId("report-month");
+  const months = new Set();
+
+  transactions.forEach(tx => {
+    const month = getTxDate(tx).month;
+    if (month) months.add(month);
+  });
+
+  select.replaceChildren();
+
+  [...months].sort().reverse().forEach(month => {
+    select.add(new Option(month, month));
+  });
+
+  if (months.size === 0) {
+    select.add(new Option("No dated transactions found", ""));
+    select.disabled = true;
+    byId("download-button").disabled = true;
+  } else {
+    select.disabled = false;
+    byId("download-button").disabled = false;
+  }
+
+  byId("month-count").textContent = months.size;
+}
+
+// ---------------- Monthly Excel reports ----------------
+
+async function downloadReport() {
+  const month = byId("report-month").value;
+  const button = byId("download-button");
+  const status = byId("report-status");
+
+  if (!month) {
+    status.textContent = "Select a month first.";
+    return;
+  }
+
+  button.disabled = true;
+  status.textContent = "Generating Excel report...";
+
+  try {
+    const response = await fetch(
+      "/api/monthly-report?month=" + encodeURIComponent(month),
+      {cache: "no-store"}
+    );
+
+    if (!response.ok) {
+      let message = "Report generation failed.";
+      try {
+        const data = await response.json();
+        message = data.error || message;
+      } catch {}
+      throw new Error(message);
+    }
+
+    const blob = await response.blob();
+    const objectUrl = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = objectUrl;
+    link.download = `transactions_${month}.xlsx`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
+
+    status.textContent = `Excel report downloaded for ${month}.`;
+  } catch (error) {
+    status.textContent = "Error: " + error.message;
+  } finally {
+    button.disabled = false;
+  }
+}
+
+// ---------------- Debt risk alerts ----------------
+
+async function loadDebtAlerts() {
+  const container = byId("debt-alert-list");
+  container.textContent = "Loading debts...";
+
+  try {
+    const response = await fetch("/api/debts", {cache: "no-store"});
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || "Could not load debts.");
+
+    container.replaceChildren();
+    const debts = Array.isArray(data.debts) ? data.debts : [];
+
+    if (debts.length === 0) {
+      const empty = document.createElement("p");
+      empty.className = "alert-empty";
+      empty.textContent = "No upcoming debts added yet.";
+      container.appendChild(empty);
+      return;
+    }
+
+    debts.forEach(debt => {
+      const warning = debt.warning;
+      const card = document.createElement("article");
+      card.className = "alert-card";
+      card.style.setProperty("--alert-color", warning.hex);
+
+      const top = document.createElement("div");
+      top.className = "alert-top";
+
+      const name = document.createElement("strong");
+      name.textContent = debt.name;
+
+      const level = document.createElement("span");
+      level.className = "alert-level";
+      level.textContent = warning.level.toUpperCase();
+
+      top.append(name, level);
+
+      const amount = document.createElement("p");
+      amount.textContent = "Amount: " + money(debt.amount);
+
+      const timing = document.createElement("p");
+      if (debt.days_left < 0) {
+        timing.textContent =
+          `OVERDUE by ${Math.abs(debt.days_left)} day(s) | Due ${debt.due_date}`;
+      } else if (debt.days_left === 0) {
+        timing.textContent = "DUE TODAY";
+      } else {
+        timing.textContent =
+          `${debt.days_left} day(s) remaining | Due ${debt.due_date}`;
+      }
+
+      const note = document.createElement("div");
+      note.className = "alert-details";
+      note.textContent = debt.reason || "No additional note.";
+
+      card.append(top, amount, timing, note);
+      container.appendChild(card);
+    });
+  } catch (error) {
+    container.textContent = "Could not load debt alerts: " + error.message;
+  }
+}
+
+byId("debt-form").addEventListener("submit", async event => {
+  event.preventDefault();
+
+  const button = byId("save-debt-button");
+  const status = byId("debt-form-status");
+
+  const payload = {
+    name: byId("debt-name").value.trim(),
+    amount: Number(byId("debt-amount").value),
+    due_date: byId("debt-due-date").value,
+    reason: byId("debt-reason").value.trim()
+  };
+
+  button.disabled = true;
+  status.textContent = "Saving debt...";
+
+  try {
+    const response = await fetch("/api/debts", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify(payload)
+    });
+
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || "Could not save debt.");
+
+    status.textContent = "Debt saved successfully.";
+    byId("debt-name").value = "";
+    byId("debt-amount").value = "";
+    byId("debt-due-date").value = "";
+    byId("debt-reason").value = "";
+
+    await loadDebtAlerts();
+  } catch (error) {
+    status.textContent = "Error: " + error.message;
+  } finally {
+    button.disabled = false;
+  }
+});
+
+byId("refresh-button").addEventListener("click", loadDashboard);
+byId("download-button").addEventListener("click", downloadReport);
+
+// Load both independent sections when the page opens.
+loadDashboard();
+loadDebtAlerts();
+</script>
+</body>
+</html>
