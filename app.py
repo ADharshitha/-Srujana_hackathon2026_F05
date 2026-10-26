@@ -183,7 +183,7 @@ class AppHandler(SimpleHTTPRequestHandler):
     def do_GET(self):
         path = urlparse(self.path).path
         if path == "/api/health":
-            self.send_json(200, {"status": "running", "app": "Mock Hack FinTech Tester"})
+            self.send_json(200, {"status": "running", "app": "Matrix Finance Tracker "})
             return
         if path == "/api/dashboard":
             try:
