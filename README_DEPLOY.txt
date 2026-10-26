@@ -25,8 +25,10 @@ Render:
 6. Deploy. Do not commit the real token to GitHub.
 
 Notes:
+-The link to the Demo UPI website is https://finsim-pay-flow.base44.app/
 - The hypothetical tracker uses the existing /api/dashboard endpoint; no new API endpoint is needed.
 - Recurring payments are heuristic candidates (same merchant/category in at least two distinct months), not guaranteed subscriptions.
 - Budget utilisation uses the budget entered on the hypothetical page.
 - For transactions with no explicit direction/type, only negative amounts are treated as expenses. If your Base44 schema stores all amounts as positive and uses a different direction field, adjust isExpense() in hypothetical.html to match your schema.
 - On Render, the local debts.json file may not persist across redeploys/restarts unless you use persistent storage or a database.
+-For the Direct Access of the app https://srujana-hackathon2026-f05.onrender.com/
